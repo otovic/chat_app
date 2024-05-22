@@ -1,12 +1,22 @@
 import 'dart:convert';
+import 'dart:math';
 
+import 'package:chat_app/screens/home_screen.dart';
+import 'package:chat_app/state/state.dart';
 import 'package:chat_app/utility/server.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'dart:io';
 
+import 'package:provider/provider.dart';
+
 void main() {
-  runApp(const MyApp());
+  runApp(
+    ChangeNotifierProvider(
+      create: (context) => AppState(),
+      child: const MyApp(),
+    ),
+  );
 }
 
 class MyApp extends StatelessWidget {
@@ -15,13 +25,12 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      debugShowCheckedModeBanner: false,
-      title: 'Flutter Demo',
-      theme: ThemeData(
-        primarySwatch: Colors.blue,
-      ),
-      home: const MyHomePage(title: 'Available people'),
-    );
+        debugShowCheckedModeBanner: false,
+        title: 'Flutter Demo',
+        theme: ThemeData(
+          primarySwatch: Colors.blue,
+        ),
+        home: HomeScreen());
   }
 }
 
@@ -39,6 +48,7 @@ class _MyHomePageState extends State<MyHomePage> {
   final List<String> messages = [];
   final TextEditingController controller = TextEditingController();
   Server? server;
+  String status = "";
 
   @override
   void initState() {
@@ -59,7 +69,14 @@ class _MyHomePageState extends State<MyHomePage> {
     switch (msgID) {
       case 'rs//request_connection_success':
         List<String> parts = message.split(':');
-        server = Server(ip: parts[1], port: int.parse(parts[2]));
+        server = Server(ip: parts[1], port: [
+          int.parse(parts[2]),
+          int.parse(parts[3]),
+          int.parse(parts[4])
+        ]);
+
+        print('Server: ${server!.ip}:${server!.port}');
+
         connectToServer();
         break;
       case 'rs//connection_accepted':
@@ -68,15 +85,17 @@ class _MyHomePageState extends State<MyHomePage> {
       case 'rs//connection_refused':
         messages.add('Connection refused');
         break;
+      case 'rs//request_connection_error':
+        print('Request connection error: $message');
+        break;
       default:
-        print('Request connection success');
-        messages.add('Unknown message: $message');
+        print('Unknown message: $message');
     }
   }
 
   void connectToBalancer() async {
     try {
-      balancer = await Socket.connect('192.168.0.107', 12345);
+      balancer = await Socket.connect('192.168.0.107', 12344);
       print(
           'Connected to: ${balancer.remoteAddress.address}:${balancer.remotePort}');
 
@@ -95,6 +114,16 @@ class _MyHomePageState extends State<MyHomePage> {
     }
   }
 
+  void parseServerMessage(String message) {
+    switch (status.split(":")[0]) {
+      case 'rs//available_people':
+        print('Available people: $message');
+        break;
+      default:
+        print('Unknown message: $message');
+    }
+  }
+
   void connectToServer() async {
     if (server == null) {
       messages.add('No server available');
@@ -104,23 +133,28 @@ class _MyHomePageState extends State<MyHomePage> {
     print('Connecting to server: ${server!.ip}:${server!.port}');
 
     try {
-      Socket socket = await Socket.connect(server!.ip, server!.port!);
+      Random random = Random();
+      int randomPort = 0 + random.nextInt(2 - 0 + 1);
+      print('Random port: $randomPort');
+      Socket socket =
+          await Socket.connect(server!.ip, server!.port![randomPort]);
       print(
           'Connected to: ${socket.remoteAddress.address}:${socket.remotePort}');
 
       server!.socket = socket;
 
-      server!.sendMessage("rq//availabe_people\n");
-
       socket.listen((data) {
         String message = utf8.decoder.convert(data);
-        print('Received: $message');
+        parseServerMessage(message);
       }, onDone: () {
         print('Server disconnected');
         socket.destroy();
+      }, onError: (e) {
+        print('Error: $e');
       });
 
       socket.write('cf//username:Petar Otovic\n');
+      server!.sendMessage("rq//available_people\n");
     } catch (e) {
       print('Unable to connect: $e');
     }
