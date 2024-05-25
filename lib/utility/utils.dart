@@ -26,4 +26,9 @@ class Utils {
       ),
     );
   }
+
+  static bool isAlphabetic(String input) {
+    final alphabeticRegex = RegExp(r'^[a-zA-Z]+$');
+    return alphabeticRegex.hasMatch(input);
+  }
 }

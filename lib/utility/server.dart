@@ -2,6 +2,8 @@ import 'dart:convert';
 import 'dart:io';
 
 import 'package:chat_app/utility/user.dart';
+import 'package:chat_app/utility/utils.dart';
+import 'package:flutter/material.dart';
 
 class Server {
   late String? username;
@@ -11,6 +13,7 @@ class Server {
   late Socket? socket;
   late Function onConnectionSuccess;
   late Function onConnectionError;
+  late Function notifyListeners;
 
   Server({
     this.username,
@@ -19,6 +22,7 @@ class Server {
     this.socket,
     required this.onConnectionSuccess,
     required this.onConnectionError,
+    required this.notifyListeners,
   }) {
     connect(ip!, ports![0], onConnectionSuccess);
   }
@@ -38,8 +42,25 @@ class Server {
       }
       List<String> people = message.split(":");
       for (int i = 1; i < people.length; i++) {
+        if (people[i].isEmpty || people[i].length < 3) {
+          continue;
+        }
+        print("Adding user: ${people[i]}");
         users[people[i]] = User(username: people[i]);
       }
+      notifyListeners();
+      return;
+    }
+    if (message.startsWith("cf//user_joined")) {
+      String username = message.split(":")[1];
+      users[username] = User(username: username);
+      notifyListeners();
+      return;
+    }
+    if (message.startsWith("cf//user_left")) {
+      String username = message.split(":")[1];
+      users.remove(username);
+      notifyListeners();
       return;
     }
   }

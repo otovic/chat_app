@@ -31,13 +31,17 @@ class _HomeScreenState extends State<HomeScreen> {
   void connectToServer(BuildContext context) async {
     try {
       setLoader(true);
-      if (usernameController.text.isEmpty) {
-        Utils.showSnackBar(context, "Please enter a username.");
+      if (usernameController.text.isEmpty ||
+          usernameController.text.length < 3) {
+        Utils.showSnackBar(
+            context, "Username must be at least 3 characters long");
+        setLoader(false);
         return;
       }
 
       if (serverIPController.text.isEmpty) {
         Utils.showSnackBar(context, "Please enter a server IP address.");
+        setLoader(false);
         return;
       }
 
@@ -64,6 +68,7 @@ class _HomeScreenState extends State<HomeScreen> {
       ports: serverPorts,
       onConnectionSuccess: onServerConnectionSuccess,
       onConnectionError: onConnectionError,
+      notifyListeners: state.notify,
     );
   }
 
