@@ -19,20 +19,25 @@ class Balancer {
   }
 
   void _connect() async {
-    var balancer = await Socket.connect(ip, port);
-    print(
-        'Connected to: ${balancer.remoteAddress.address}:${balancer.remotePort}');
+    try {
+      var balancer = await Socket.connect(ip, port);
+      print(
+          'Connected to: ${balancer.remoteAddress.address}:${balancer.remotePort}');
 
-    balancer.listen((data) {
-      String message = utf8.decoder.convert(data);
-      print('Received from balancer: $message');
-      _parseMessage(message);
-    }, onDone: () {
-      print('Balancer closed');
-      balancer.destroy();
-    });
+      balancer.listen((data) {
+        String message = utf8.decoder.convert(data);
+        print('Received from balancer: $message');
+        _parseMessage(message);
+      }, onDone: () {
+        print('Balancer closed');
+        balancer.destroy();
+      });
 
-    balancer.write('rq//request_connection\n');
+      balancer.write('rq//request_connection\n');
+    } catch (e) {
+      print('Unable to connect to balancer: $e');
+      onConnectionError("Unable to connect to balancer");
+    }
   }
 
   void _parseMessage(String message) {

@@ -9,6 +9,7 @@ import 'package:provider/provider.dart';
 
 import '../state/state.dart';
 import '../utility/user.dart';
+import 'chat_screen.dart';
 
 class LobbyScreen extends StatefulWidget {
   LobbyScreen({super.key});
@@ -43,6 +44,8 @@ class _LobbyScreenState extends State<LobbyScreen> {
         users = [];
       });
     }
+    print(users[0].unreadMessages);
+    setState(() {});
   }
 
   void endChat() {
@@ -80,6 +83,15 @@ class _LobbyScreenState extends State<LobbyScreen> {
                             appState.server!.users.values.elementAt(index);
                         return UserCard(
                           username: user.username,
+                          unreadMessages: user.unreadMessages,
+                          onTap: () {
+                            appState.server!.users[user.username]!
+                                .unreadMessages = 0;
+                            appState.notifyListeners();
+                            appState.server!.chatPartner = user.username;
+                            Navigator.of(context).push(MaterialPageRoute(
+                                builder: (context) => ChatScreen()));
+                          },
                         );
                       },
                     ),

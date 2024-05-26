@@ -5,6 +5,8 @@ import 'package:chat_app/utility/user.dart';
 import 'package:chat_app/utility/utils.dart';
 import 'package:flutter/material.dart';
 
+import 'message.dart';
+
 class Server {
   late String? username;
   late Map<String, User> users = {};
@@ -14,6 +16,7 @@ class Server {
   late Function onConnectionSuccess;
   late Function onConnectionError;
   late Function notifyListeners;
+  late String chatPartner = "";
 
   Server({
     this.username,
@@ -29,6 +32,15 @@ class Server {
 
   void sendMessage(String message) {
     socket?.write(message + "\n");
+  }
+
+  void sendChatMessage(String message) {
+    users[chatPartner]?.messages.add(Message(
+          message: message,
+          from: username!,
+        ));
+    socket?.write("cf//chat:${username}:${chatPartner}:${message}\n");
+    notifyListeners();
   }
 
   void _parseMessage(String message) {
@@ -60,6 +72,23 @@ class Server {
     if (message.startsWith("cf//user_left")) {
       String username = message.split(":")[1];
       users.remove(username);
+      if (chatPartner == username) {
+        chatPartner = "";
+      }
+      notifyListeners();
+      return;
+    }
+    if (message.startsWith("cf//chat_receive")) {
+      List<String> parts = message.split(":");
+      String from = parts[1];
+      String chat = parts[2];
+      users[from]?.messages.add(Message(
+            message: chat,
+            from: from,
+          ));
+      if (chatPartner != from) {
+        users[from]?.unreadMessages++;
+      }
       notifyListeners();
       return;
     }

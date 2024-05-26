@@ -1,10 +1,14 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/src/widgets/framework.dart';
-import 'package:flutter/src/widgets/placeholder.dart';
 
 class UserCard extends StatefulWidget {
-  UserCard({super.key, required this.username});
+  UserCard(
+      {super.key,
+      required this.username,
+      required this.onTap,
+      this.unreadMessages = 0});
   final String username;
+  Function? onTap;
+  int unreadMessages = 0;
 
   @override
   State<UserCard> createState() => _UserCardState();
@@ -17,7 +21,7 @@ class _UserCardState extends State<UserCard> {
       color: Colors.transparent,
       child: InkWell(
         onTap: () {
-          print("User card tapped");
+          widget.onTap!();
         },
         splashColor: Colors.grey.withOpacity(0.5),
         highlightColor: Colors.grey.withOpacity(0.5),
@@ -36,6 +40,28 @@ class _UserCardState extends State<UserCard> {
                   flex: 10,
                   child: Text(widget.username,
                       style: const TextStyle(fontSize: 18)),
+                ),
+                Expanded(
+                  flex: 1,
+                  child: widget.unreadMessages > 0
+                      ? Container(
+                          height: 20,
+                          width: 20,
+                          decoration: BoxDecoration(
+                            color: Colors.red,
+                            borderRadius: BorderRadius.circular(10),
+                          ),
+                          child: Center(
+                            child: Text(
+                              widget.unreadMessages.toString(),
+                              style: TextStyle(
+                                color: Colors.white,
+                                fontSize: 12,
+                              ),
+                            ),
+                          ),
+                        )
+                      : SizedBox.shrink(),
                 ),
                 Expanded(
                   flex: 1,
