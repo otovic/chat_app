@@ -24,23 +24,40 @@ class _ChatScreenState extends State<ChatScreen> {
   @override
   void initState() {
     super.initState();
+    print("Chat screen init");
     appState = Provider.of<AppState>(context, listen: false);
     server = appState.server!;
     messages = server.users[server.chatPartner]!.messages;
     appState.addListener(_handleStateChange);
-    _scrollToBottom();
+    WidgetsBinding.instance!.addPostFrameCallback((timeStamp) {
+      _scrollController.animateTo(
+        _scrollController.position.maxScrollExtent,
+        duration: Duration(milliseconds: 300),
+        curve: Curves.easeOut,
+      );
+    });
   }
 
   void _handleStateChange() {
+    print("Chat screen state change");
     if (server.chatPartner.isEmpty) {
       Navigator.of(context).pop();
       Utils.showSnackBar(context, "Chat partner went offline");
     }
+    WidgetsBinding.instance!.addPostFrameCallback((timeStamp) {
+      _scrollController.animateTo(
+        _scrollController.position.maxScrollExtent,
+        duration: Duration(milliseconds: 300),
+        curve: Curves.easeOut,
+      );
+    });
   }
 
   @override
   void dispose() {
+    appState.server!.chatPartner = "";
     appState.removeListener(_handleStateChange);
+    appState.notifyListeners();
     super.dispose();
   }
 
@@ -77,8 +94,6 @@ class _ChatScreenState extends State<ChatScreen> {
                           ? ""
                           : server.users[server.chatPartner]!
                               .messages[index - 1].from;
-                      print(server
-                          .users[server.chatPartner]!.messages[index].message);
                       return Padding(
                         padding: const EdgeInsets.only(
                             top: 2, bottom: 2, left: 8, right: 8),
@@ -175,6 +190,11 @@ class _ChatScreenState extends State<ChatScreen> {
                   onPressed: () {
                     server.sendChatMessage(messageController.text);
                     messageController.clear();
+                    _scrollController.animateTo(
+                      _scrollController.position.maxScrollExtent,
+                      duration: Duration(milliseconds: 300),
+                      curve: Curves.easeOut,
+                    );
                   },
                   icon: Icon(Icons.send),
                 ),

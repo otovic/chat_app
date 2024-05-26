@@ -1,16 +1,8 @@
-import 'dart:convert';
-import 'dart:math';
-
 import 'package:chat_app/screens/home_screen.dart';
 import 'package:chat_app/state/state.dart';
-import 'package:chat_app/utility/server.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'dart:io';
-
 import 'package:provider/provider.dart';
-
-import 'utility/utils.dart';
 
 void main() {
   runApp(

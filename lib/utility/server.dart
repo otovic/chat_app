@@ -86,6 +86,8 @@ class Server {
             message: chat,
             from: from,
           ));
+      print(parts);
+      print(chatPartner);
       if (chatPartner != from) {
         users[from]?.unreadMessages++;
       }
